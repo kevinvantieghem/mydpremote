@@ -5,3 +5,6 @@
 - Confirmation par double appui : une actualisation automatique ne doit pas annuler l'état de confirmation.
 - Texte avec apostrophes ou backticks (Kotlin, français) : ne pas passer par un heredoc ou printf bash, écrire avec Write ou Edit.
 - Faux poêle de test : une commande de puissance ne lance l'allumage que si le poêle est éteint, sinon les tests mentent.
+- Remplacements Python dans un heredoc : un `"\n"` destiné au code Kotlin devient un vrai retour à la ligne. Pour du code, utiliser Edit.
+- Connexion par code (gh, wrangler) : le code expire vite (15 min). Le relancer juste avant de le donner à Kevin, et vérifier avec `gh auth status` avant de continuer.
+- Services en ligne : vérifier que l'inscription est possible pour Kevin AVANT de construire dessus (Cloudflare a bloqué, Deno Deploy ferme).
