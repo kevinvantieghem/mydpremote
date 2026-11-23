@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F5A523">
+  <title>My DP Remote</title>
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main id="app">
+    <!-- Accueil -->
+    <section id="tab-home" class="screen">
+      <div class="hero" id="hero">
+        <span class="ghost" aria-hidden="true">FEU</span>
+        <p class="eyebrow">Mon poêle</p>
+        <h1 class="display" id="etat">…</h1>
+        <p class="room"><span id="room">--</span><small>dans la pièce</small></p>
+      </div>
+
+      <div class="power-wrap">
+        <button id="onoff" class="onoff" type="button" aria-label="Marche / Arrêt">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+          <span id="onoff-label">Marche</span>
+        </button>
+      </div>
+
+      <div class="card">
+        <p class="label">Puissance</p>
+        <div class="segmented" id="power" role="radiogroup" aria-label="Puissance">
+          <button type="button" role="radio" data-p="1">1</button>
+          <button type="button" role="radio" data-p="2">2</button>
+          <button type="button" role="radio" data-p="3">3</button>
+          <button type="button" role="radio" data-p="4">4</button>
+          <button type="button" role="radio" data-p="5">5</button>
+          <button type="button" role="radio" data-p="auto">Auto</button>
+        </div>
+        <p class="hint" id="power-hint"></p>
+      </div>
+
+      <div class="card">
+        <p class="label">Consigne</p>
+        <div class="stepper">
+          <button type="button" class="round" id="sp-minus" aria-label="Baisser la consigne">−</button>
+          <span class="stat-value" id="setpoint">--</span>
+          <button type="button" class="round" id="sp-plus" aria-label="Monter la consigne">+</button>
+        </div>
+        <p class="hint" id="setpoint-hint"></p>
+      </div>
+
+      <div id="alarm" class="callout" hidden>
+        <p><strong id="alarm-text"></strong></p>
+        <button type="button" class="btn btn-dark" id="reset-alarm">Réinitialiser l'alarme</button>
+      </div>
+
+      <h2 class="section-title">Données du poêle</h2>
+      <div class="grid" id="data"></div>
+      <p class="updated"><span id="updated"></span> <button type="button" class="link" id="refresh">Actualiser</button></p>
+    </section>
+
+    <!-- Horaires -->
+    <section id="tab-schedules" class="screen" hidden>
+      <div class="hero hero-small">
+        <span class="ghost" aria-hidden="true">HEURE</span>
+        <p class="eyebrow">Programmation</p>
+        <h1 class="display">Horaires</h1>
+      </div>
+      <p class="intro">Le poêle s'allume au début et s'éteint à la fin de chaque plage active, les jours cochés.</p>
+      <div id="plages"></div>
+      <button type="button" class="btn btn-ghost" id="add-plage">+ Ajouter une plage</button>
+      <div class="sticky">
+        <button type="button" class="btn btn-primary" id="save-plages" disabled>Valider</button>
+      </div>
+    </section>
+
+    <!-- Réglages -->
+    <section id="tab-settings" class="screen" hidden>
+      <div class="hero hero-small">
+        <span class="ghost" aria-hidden="true">DP</span>
+        <p class="eyebrow">Mon boîtier</p>
+        <h1 class="display">Réglages</h1>
+      </div>
+      <form id="device-form" class="card">
+        <label for="s-host" class="label">Adresse du serveur</label>
+        <input id="s-host" class="field" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+        <label for="s-port" class="label">Port</label>
+        <input id="s-port" class="field" type="number" inputmode="numeric" min="1" max="65535" required>
+        <label for="s-code" class="label">Code du boîtier (QR code)</label>
+        <input id="s-code" class="field" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+        <button class="btn btn-primary" type="submit" id="save-device" disabled>Enregistrer</button>
+      </form>
+      <div class="card list">
+        <div class="row"><span>Dernier contact</span><strong id="s-contact">--</strong></div>
+      </div>
+      <div class="card">
+        <p class="label">Données non fournies par le boîtier</p>
+        <p class="hint" id="s-hidden">--</p>
+        <button type="button" class="btn btn-ghost" id="redetect">Re-détecter les données</button>
+      </div>
+      <p class="intro">Les horaires et le mode Auto sont gérés par le serveur, même téléphone éteint ou sans internet. Ils peuvent partir avec quelques minutes de retard.</p>
+      <p class="intro">Ferme l'app officielle MyDPremote pendant que tu utilises celle-ci : deux connexions en même temps se gênent.</p>
+    </section>
+
+    <nav class="tabbar" aria-label="Navigation">
+      <button type="button" data-tab="home" class="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c1 3.5 5 6 5 11a5 5 0 0 1-10 0c0-2.4 1.2-3.7 2.2-4.8.3 1.6 1 2.6 1.8 3 0-3.4 0-6.3 1-9.2z" fill="currentColor"/></svg>
+        Accueil
+      </button>
+      <button type="button" data-tab="schedules">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 7v5l3.5 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        Horaires
+      </button>
+      <button type="button" data-tab="settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="10" cy="17" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/></svg>
+        Réglages
+      </button>
+    </nav>
+  </main>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <template id="plage-tpl">
+    <article class="plage">
+      <header>
+        <input class="plage-name" maxlength="30" aria-label="Nom de la plage">
+        <label class="switch"><input type="checkbox" class="plage-on" aria-label="Plage active"><span></span></label>
+      </header>
+      <div class="times">
+        <label><span>Début</span><input type="time" class="plage-start" required></label>
+        <span class="arrow" aria-hidden="true">→</span>
+        <label><span>Fin</span><input type="time" class="plage-end" required></label>
+      </div>
+      <div class="days" role="group" aria-label="Jours"></div>
+      <button type="button" class="link danger plage-delete">Supprimer</button>
+    </article>
+  </template>
+
+  <script src="/app.js"></script>
+</body>
+</html>

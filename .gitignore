@@ -1,0 +1,16 @@
+# Dépôt PUBLIC : rien de secret ici. Le code du poêle est un secret GitHub (DEVICE_CODE).
+node_modules/
+.wrangler/
+.dev.vars*
+*.apk
+*.jks
+*.keystore
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/device.properties
+android/keystore.properties
+android/keystore/
+.idea/
+*.log

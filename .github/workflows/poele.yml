@@ -1,0 +1,47 @@
+# Horaires et mode Auto du poêle, même quand le téléphone est éteint ou sans internet.
+# GitHub lance ce travail toutes les 5 minutes environ (parfois avec du retard).
+name: Poêle
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      status:
+        description: "Lire l'état du poêle seulement (rien n'est envoyé)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: poele
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Passage
+        run: npx tsx scripts/tick.ts ${{ inputs.status && '--status' || '' }}
+        env:
+          DEVICE_CODE: ${{ secrets.DEVICE_CODE }}
+          RELAY_HOST: ${{ secrets.RELAY_HOST }}
+          RELAY_PORT: ${{ secrets.RELAY_PORT }}
+      - name: Enregistrer l'état
+        run: |
+          git add donnees/etat.json 2>/dev/null || exit 0
+          git diff --cached --quiet && exit 0
+          git config user.name "poele-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "État du poêle"
+          for i in 1 2 3; do git pull --rebase --quiet && git push --quiet && exit 0; sleep 5; done
+          exit 1
