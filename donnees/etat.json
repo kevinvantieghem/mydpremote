@@ -3,7 +3,7 @@
     "soir:off:2026-11-23": "2026-11-23T21:51:12.077Z",
     "extra:on:2026-11-24": "2026-11-24T20:01:23.364Z"
   },
-  "pendingSetpoint": true,
+  "pendingSetpoint": false,
   "vivant": "2026-11-24",
   "lastIgnition": "2026-11-24T20:01:23.364Z",
   "pendingSince": "2026-11-24T20:01:23.364Z"
