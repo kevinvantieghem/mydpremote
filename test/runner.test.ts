@@ -111,3 +111,46 @@ describe("passage du serveur", () => {
     expect(cleanPrefs(undefined)).toEqual({ power: 3, setpoint: 21, auto: false });
   });
 });
+
+describe("extinction qui échoue", () => {
+  const panne = { connect: nodeConnector("127.0.0.1", 1), deviceCode: CODE, loginDelayMs: 20 };
+
+  it("réessaie bien après 45 minutes, jusqu'à réussir, une seule fois", async () => {
+    const niveaux: (string | undefined)[] = [];
+    const log = (_: string, n?: string) => void niveaux.push(n);
+    let etat = await tick([matin], auto, DEFAULT_ETAT, panne, paris("2026-11-23T08:02:00"), log);
+    expect(etat.pendingOff).toBe("matin");
+    etat = await tick([matin], auto, etat, panne, paris("2026-11-23T11:00:00"), log);
+    expect(etat.pendingOff).toBe("matin");
+    expect(niveaux).toEqual(["error", "error"]);
+
+    const o = await opts(heating);
+    etat = await tick([matin], auto, etat, o, paris("2026-11-23T14:00:00"), silent);
+    expect(writes()).toEqual(["RF0000"]);
+    expect(etat.pendingOff).toBeUndefined();
+    await tick([matin], manuel, etat, o, paris("2026-11-23T14:05:00"), silent);
+    expect(writes()).toEqual(["RF0000"]);
+  });
+
+  it("dans les 45 minutes, une extinction réussie efface l'attente", async () => {
+    const attente = await tick([matin], manuel, DEFAULT_ETAT, panne, paris("2026-11-23T08:02:00"), silent);
+    const o = await opts(heating);
+    const etat = await tick([matin], manuel, attente, o, paris("2026-11-23T08:07:00"), silent);
+    expect(etat.pendingOff).toBeUndefined();
+    await tick([matin], manuel, etat, o, paris("2026-11-23T10:00:00"), silent);
+    expect(writes()).toEqual(["RF0000"]);
+  });
+
+  it("abandonne l'extinction si une plage a repris", async () => {
+    const o = await opts(off);
+    const etat = await tick([matin], manuel, { ...DEFAULT_ETAT, pendingOff: "soir" }, o, paris("2026-11-23T07:01:00"), silent);
+    expect(writes()).toEqual(["RF0040"]);
+    expect(etat.pendingOff).toBeUndefined();
+  });
+
+  it("un Auto injoignable est un avertissement, pas une erreur", async () => {
+    const niveaux: (string | undefined)[] = [];
+    await tick([], auto, DEFAULT_ETAT, panne, paris("2026-11-23T12:00:00"), (_, n) => void niveaux.push(n));
+    expect(niveaux).toEqual(["warning"]);
+  });
+});

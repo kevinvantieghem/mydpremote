@@ -29,9 +29,14 @@ export interface Etat {
   offAt?: string;
   pendingSetpoint: boolean;
   pendingSince?: string;
+  /** Extinction de plage qui a échoué : plage concernée. On réessaie jusqu'à réussir. */
+  pendingOff?: string;
   /** Date du dernier passage (AAAA-MM-JJ) : change une fois par jour, garde le dépôt actif. */
   vivant?: string;
 }
+
+/** "error" : une action de plage a échoué. "warning" : poêle injoignable, sans action de plage en jeu. */
+export type Log = (line: string, level?: "error" | "warning") => void;
 
 export const DEFAULT_PREFS: Prefs = { power: 3, setpoint: 21, auto: false };
 export const DEFAULT_ETAT: Etat = { fired: {}, pendingSetpoint: false };
@@ -59,7 +64,7 @@ export async function tick(
   before: Etat,
   relay: RelayOptions,
   now = new Date(),
-  log: (line: string) => void = console.log,
+  log: Log = (line) => console.log(line),
 ): Promise<Etat> {
   let etat: Etat = { ...before, fired: { ...before.fired }, vivant: parisTime(now).date };
   const stamp = now.toISOString();
@@ -68,6 +73,7 @@ export async function tick(
   const due = dueActions(plages, now, etat.fired, CATCH_UP_MINUTES);
   const action = finalAction(due);
   if (action) {
+    if (action.action === "on") etat.pendingOff = undefined; // un allumage plus récent annule l'extinction en attente
     let done = true;
     try {
       if (action.action === "on") {
@@ -89,20 +95,38 @@ export async function tick(
         }
       } else if (insideOtherPlage(plages, now, action.plageId)) {
         log(`Plage ${action.plageId} : fin ignorée, une autre plage est en cours`);
+        etat.pendingOff = undefined;
       } else {
         await turnOff(relay);
         log(`Plage ${action.plageId} : éteindre → envoyé`);
-        etat = { ...etat, pendingSetpoint: false, offAt: stamp };
+        etat = { ...etat, pendingSetpoint: false, pendingOff: undefined, offAt: stamp };
       }
     } catch (err) {
       // Poêle injoignable : on réessaie au passage suivant, dans la fenêtre de rattrapage.
       done = false;
-      log(`Plage ${action.plageId} : ${action.action} a échoué : ${(err as Error).message}`);
+      log(`Plage ${action.plageId} : ${action.action} a échoué : ${(err as Error).message}`, "error");
+      if (action.action === "off") return { ...etat, pendingSetpoint: false, pendingOff: action.plageId };
     }
     if (done) {
       for (const a of due) etat.fired[a.key] = stamp;
       etat.fired = pruneFired(etat.fired, now);
       return etat; // le reste attendra le passage suivant
+    }
+  }
+
+  // Extinction qui a échoué et dont la fenêtre de rattrapage est passée
+  if (!action && etat.pendingOff !== undefined) {
+    if (insideOtherPlage(plages, now, "")) {
+      etat = { ...etat, pendingOff: undefined };
+    } else {
+      try {
+        await turnOff(relay);
+        log(`Plage ${etat.pendingOff} : éteindre (en attente) → envoyé`);
+        return { ...etat, pendingOff: undefined, offAt: stamp };
+      } catch (err) {
+        log(`Plage ${etat.pendingOff} : éteindre (en attente) a échoué : ${(err as Error).message}`, "error");
+        return etat;
+      }
     }
   }
 
@@ -117,7 +141,7 @@ export async function tick(
           etat = { ...etat, pendingSetpoint: false };
         }
       } catch (err) {
-        log(`Consigne en attente : ${(err as Error).message}`);
+        log(`Consigne en attente : ${(err as Error).message}`, "warning");
       }
     }
   }
@@ -130,7 +154,7 @@ export async function tick(
       else if (r.sent) log(`Auto : pièce ${r.room} °C pour ${prefs.setpoint} °C → puissance ${r.power} envoyée`);
       else log(`Auto : pièce ${r.room} °C pour ${prefs.setpoint} °C, puissance ${r.power} déjà en place`);
     } catch (err) {
-      log(`Auto : ${(err as Error).message}`);
+      log(`Auto : ${(err as Error).message}`, "warning");
     }
   }
 

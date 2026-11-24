@@ -31,7 +31,11 @@ const plages = validatePlages(read("plages.json") ?? []);
 const prefs = cleanPrefs(read("prefs.json"));
 const before: Etat = { ...DEFAULT_ETAT, ...(read("etat.json") as Partial<Etat> | undefined) };
 
-const after = await tick(plages, prefs, before, relay);
+// Une plage qui échoue met le passage en rouge ; un poêle injoignable sans plage à faire donne un avertissement.
+const after = await tick(plages, prefs, before, relay, new Date(), (line, level) => {
+  console.log(level ? `::${level}::${line}` : line);
+  if (level === "error") process.exitCode = 1;
+});
 
 const text = `${JSON.stringify(after, null, 2)}\n`;
 if (text !== `${JSON.stringify(before, null, 2)}\n`) {

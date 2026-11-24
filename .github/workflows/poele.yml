@@ -37,6 +37,7 @@ jobs:
           RELAY_HOST: ${{ secrets.RELAY_HOST }}
           RELAY_PORT: ${{ secrets.RELAY_PORT }}
       - name: Enregistrer l'état
+        if: ${{ !cancelled() }}
         run: |
           git add donnees/etat.json 2>/dev/null || exit 0
           git diff --cached --quiet && exit 0
