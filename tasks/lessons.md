@@ -8,3 +8,4 @@
 - Remplacements Python dans un heredoc : un `"\n"` destiné au code Kotlin devient un vrai retour à la ligne. Pour du code, utiliser Edit.
 - Connexion par code (gh, wrangler) : le code expire vite (15 min). Le relancer juste avant de le donner à Kevin, et vérifier avec `gh auth status` avant de continuer.
 - Services en ligne : vérifier que l'inscription est possible pour Kevin AVANT de construire dessus (Cloudflare a bloqué, Deno Deploy ferme).
+- Passage GitHub vert : ne prouve pas que le poêle a été joint. Lire le journal de chaque passage, et attendre qu'il soit fini, avant de dire que ça marche.
