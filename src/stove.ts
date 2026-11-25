@@ -67,11 +67,14 @@ const CORE = {
   error: "RDA000",
 } as const;
 
+/** 0x0100 = OK, 0x0300 = défaut (aceindy/Duepi_EVO). Autre valeur : pas d'information (ce poêle renvoie toujours 0). */
+export const pressureOk = (v: number): boolean | undefined => (v === 0x0100 ? true : v === 0x0300 ? false : undefined);
+
 /** Registres en plus, confirmés seulement en connexion locale : testés, masqués s'ils ne répondent pas. */
 export const EXTRAS = {
   pcbTemp: { register: "RDF000", parse: (d: string) => value4(d) },
   fanRpm: { register: "REF000", parse: (d: string) => value4(d) * 10 },
-  pressureOk: { register: "RC0000", parse: (d: string) => value4(d) === 0x0100 },
+  pressureOk: { register: "RC0000", parse: (d: string) => pressureOk(value4(d)) },
   hoursTotal: { register: "RED000", parse: (d: string) => value6(d) },
   hoursPartial: { register: "REE000", parse: (d: string) => value6(d) },
 } as const;
@@ -108,7 +111,8 @@ export async function readStatus(opts: RelayOptions, skip: readonly ExtraName[] 
       if (skip.includes(name)) continue;
       try {
         const def = EXTRAS[name];
-        (extras as Record<string, unknown>)[name] = def.parse(await s.read(def.register));
+        const value = def.parse(await s.read(def.register));
+        if (value !== undefined) (extras as Record<string, unknown>)[name] = value;
       } catch (err) {
         if (!(err instanceof TransportError || err instanceof ProtocolError)) throw err;
         unsupported.push(name);

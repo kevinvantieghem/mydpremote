@@ -101,6 +101,17 @@ class ApiTest {
     }
 
     @Test
+    fun `pressostat en defaut ou sans information`() {
+        stove.regs["RC0000"] = "030000"
+        assertEquals(false, call("GET", "/api/status").second.getJSONObject("extras").getBoolean("pressureOk"))
+        stove.regs["RC0000"] = "000000"
+        val s = call("GET", "/api/status").second
+        assertFalse(s.getJSONObject("extras").has("pressureOk"))
+        assertEquals(2748, s.getJSONObject("extras").getInt("hoursTotal"))
+        assertEquals(0, s.getJSONArray("unsupported").length())
+    }
+
+    @Test
     fun `allume, refuse un second allumage dans la minute, puis eteint`() {
         val (s1, r1) = call("POST", "/api/on")
         assertEquals(200, s1)

@@ -52,13 +52,20 @@ object Stove {
 
     private fun isHeating(phase: Int, realPower: Int) = phase == PHASE_HEATING && realPower >= 1
 
+    /** 0x0100 = OK, 0x0300 = défaut (aceindy/Duepi_EVO). Autre valeur : pas d'information (ce poêle renvoie toujours 0). */
+    private fun pressureOk(v: Int): Boolean? = when (v) {
+        0x0100 -> true
+        0x0300 -> false
+        else -> null
+    }
+
     /** Registres en plus, confirmés seulement en connexion locale : testés, masqués s'ils ne répondent pas. */
-    class Extra(val name: String, val register: String, val parse: (String) -> Any)
+    class Extra(val name: String, val register: String, val parse: (String) -> Any?)
 
     val EXTRAS = listOf(
         Extra("pcbTemp", "RDF000") { Duepi.value4(it) },
         Extra("fanRpm", "REF000") { Duepi.value4(it) * 10 },
-        Extra("pressureOk", "RC0000") { Duepi.value4(it) == 0x0100 },
+        Extra("pressureOk", "RC0000") { pressureOk(Duepi.value4(it)) },
         Extra("hoursTotal", "RED000") { Duepi.value6(it) },
         Extra("hoursPartial", "REE000") { Duepi.value6(it) },
     )
@@ -78,7 +85,7 @@ object Stove {
             for (extra in EXTRAS) {
                 if (extra.name in skip) continue
                 try {
-                    extras.put(extra.name, extra.parse(s.read(extra.register)))
+                    extra.parse(s.read(extra.register))?.let { extras.put(extra.name, it) }
                 } catch (e: DuepiException) {
                     unsupported.put(extra.name)
                     // Après un silence, une réponse tardive pourrait être prise pour la suivante : on s'arrête là.

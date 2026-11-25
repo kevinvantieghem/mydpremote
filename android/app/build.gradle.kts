@@ -20,8 +20,8 @@ android {
         applicationId = "app.mydpremote"
         minSdk = 33
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 5
+        versionName = "1.4"
         // Valeurs par défaut du boîtier (modifiables dans Réglages).
         buildConfigField("String", "RELAY_HOST", quoted("relayHost"))
         buildConfigField("String", "RELAY_PORT", quoted("relayPort"))

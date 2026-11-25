@@ -2,7 +2,7 @@
 // Usage : DP_CODE=... DP_HOST=duepiwebserver4.com DP_PORT=3000 npm run probe
 import { value4, value6, withSession } from "../src/duepi";
 import { nodeConnector } from "../src/nodeTransport";
-import { errorLabel, phaseEtat } from "../src/stove";
+import { errorLabel, phaseEtat, pressureOk } from "../src/stove";
 
 const code = process.env.DP_CODE;
 const host = process.env.DP_HOST;
@@ -21,7 +21,7 @@ const registers: [string, string, (d: string) => string][] = [
   ["RDA000", "Erreur", (d) => `${value4(d)} : ${errorLabel(value4(d))}`],
   ["RDF000", "Température carte", (d) => `${value4(d)} °C`],
   ["REF000", "Ventilateur fumées", (d) => `${value4(d) * 10} tr/min`],
-  ["RC0000", "Pressostat", (d) => (value4(d) === 0x0100 ? "OK" : `0x${d.slice(0, 4)}`)],
+  ["RC0000", "Pressostat", (d) => ({ true: "OK", false: "Défaut" }[String(pressureOk(value4(d)))] ?? `sans information (0x${d.slice(0, 4)})`)],
   ["RED000", "Heures totales", (d) => String(value6(d))],
   ["REE000", "Heures partielles", (d) => String(value6(d))],
 ];

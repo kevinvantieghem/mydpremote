@@ -37,6 +37,16 @@ describe("poêle via le relais", () => {
     });
   });
 
+  it("pressostat : OK, défaut, ou rien si la valeur ne veut rien dire (0 sur le poêle de Kevin)", async () => {
+    const regs = { ...heating, RDF000: v("0020"), REF000: v("0096"), RED000: "000ABC", REE000: "000012" };
+    const o = await opts({ ...regs, RC0000: v("0300") });
+    expect((await readStatus(o)).extras.pressureOk).toBe(false);
+    relay!.registers.RC0000 = v("0000");
+    const s = await readStatus(o);
+    expect(s.extras).toEqual({ pcbTemp: 32, fanRpm: 1500, hoursTotal: 0xabc, hoursPartial: 0x12 });
+    expect(s.unsupported).toEqual([]);
+  });
+
   it("masque une donnée à laquelle le poêle ne répond pas", async () => {
     const o = await opts({ ...off, RDF000: v("0020") });
     const s = await readStatus(o);
