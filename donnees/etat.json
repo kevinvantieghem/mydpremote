@@ -9,7 +9,7 @@
     "soir:off:2026-11-25": "2026-11-25T21:51:22.399Z",
     "matin:on:2026-11-26": "2026-11-26T06:51:20.076Z"
   },
-  "pendingSetpoint": true,
+  "pendingSetpoint": false,
   "vivant": "2026-11-26",
   "lastIgnition": "2026-11-26T06:51:20.076Z",
   "pendingSince": "2026-11-26T06:51:20.076Z"
