@@ -14,7 +14,7 @@
     "matin:off:2026-11-27": "2026-11-27T08:51:28.947Z",
     "extra:on:2026-11-27": "2026-11-27T20:01:22.324Z"
   },
-  "pendingSetpoint": true,
+  "pendingSetpoint": false,
   "vivant": "2026-11-27",
   "lastIgnition": "2026-11-27T06:51:19.856Z",
   "pendingSince": "2026-11-27T20:01:22.324Z"
